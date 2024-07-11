@@ -31,6 +31,25 @@ import (
 
 var cfgFile string
 
+var scale = []string{
+	"Black",
+	"Very Dark Gray",
+	"Dark Gray",
+	"Medium Dark Gray",
+	"Slate Gray",
+	"Dim Gray",
+	"Light Slate Gray",
+	"Gray",
+	"Light Gray",
+	"Gainsboro",
+	"Silver",
+	"Light Silver",
+	"Very Light Gray",
+	"Near White",
+	"Off White",
+	"White",
+}
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "greyscale",
