@@ -24,10 +24,14 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
+	"slices"
 	"strings"
 
 	"github.com/charmbracelet/glamour"
 	"github.com/spf13/cobra"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var colorName string
@@ -76,6 +80,14 @@ named greyscale color in the image
 			}
 		}
 
+		if colorName != "" {
+			colorName = cases.Title(language.Und).String(colorName)
+			colorIndex := slices.Index(scale, colorName)
+			pct := float64(histogram[colorIndex]) / float64(numpix) * 100
+			fmt.Println(pct)
+			os.Exit(0)
+		}
+
 		var out strings.Builder
 		out.WriteString("|Color Name|Pixels|Percent|\n")
 		out.WriteString("|----:|-----:|------:|\n")
@@ -85,6 +97,7 @@ named greyscale color in the image
 		}
 		md, err := glamour.Render(out.String(), "dark")
 		fmt.Print(md)
+		os.Exit(0)
 	},
 }
 
