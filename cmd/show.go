@@ -53,7 +53,7 @@ func init() {
 	showCmd.MarkPersistentFlagRequired("infile")
 }
 
-// reads a file named fn and returns
+// reads a file named f and returns
 // a decoded image, file format, and err
 func readImage(f string) (image.Image, string, error) {
 	reader, err := os.Open(f)

@@ -25,15 +25,21 @@ import (
 	"fmt"
 	"image/color"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 )
+
+var width, height, dimensions bool
 
 // infoCmd represents the info command
 var infoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "show filetype, color model, and dimensions of an image",
-	Long:  "",
+	Long: `
+Shows all image details by default. Using an optional flag restricts the output,
+which can be useful for scripts or piping the output to another command.
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		m, filetype, err := readImage(infile)
@@ -42,6 +48,19 @@ var infoCmd = &cobra.Command{
 		}
 
 		bounds := m.Bounds()
+		if width {
+			fmt.Println(bounds.Max.X - bounds.Min.X)
+			os.Exit(0)
+		}
+		if height {
+			fmt.Println(bounds.Max.Y - bounds.Min.Y)
+			os.Exit(0)
+		}
+		if dimensions {
+			fmt.Printf("%dx%d\n", bounds.Max.X-bounds.Min.X, bounds.Max.Y-bounds.Min.Y)
+			os.Exit(0)
+		}
+
 		numpix := bounds.Max.X * bounds.Max.Y
 
 		var colorModelName string
@@ -78,4 +97,7 @@ var infoCmd = &cobra.Command{
 
 func init() {
 	showCmd.AddCommand(infoCmd)
+	infoCmd.PersistentFlags().BoolVarP(&width, "width", "", false, "show image width only")
+	infoCmd.PersistentFlags().BoolVarP(&height, "height", "", false, "show image height only")
+	infoCmd.PersistentFlags().BoolVarP(&dimensions, "dimensions", "", false, "show image dimensions (eg: WxH)")
 }
