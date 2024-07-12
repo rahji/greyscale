@@ -37,6 +37,7 @@ import (
 var colorName string
 var pixels string
 var top int
+var nonzero bool
 
 // colorsCmd represents the colors command
 var colorsCmd = &cobra.Command{
@@ -93,6 +94,9 @@ named greyscale color in the image
 		out.WriteString("|----:|-----:|------:|\n")
 		for i, x := range histogram {
 			pct := float64(x) / float64(numpix) * 100
+			if nonzero && pct == 0 {
+				continue
+			}
 			out.WriteString(fmt.Sprintf("|%s|%d|%.02f%%|\n", scale[i], x, pct))
 		}
 		md, err := glamour.Render(out.String(), "dark")
@@ -106,4 +110,5 @@ func init() {
 	colorsCmd.PersistentFlags().StringVarP(&colorName, "color", "c", "", "greyscale color name (returns percentage)")
 	colorsCmd.PersistentFlags().IntVarP(&top, "top", "t", 0, "number of the highest-frequency colors to show")
 	colorsCmd.PersistentFlags().StringVarP(&pixels, "pixels", "p", "", "range of pixels to look at (x,y:x,y)")
+	colorsCmd.PersistentFlags().BoolVarP(&nonzero, "nonzero", "n", false, "only show non-zero results")
 }
