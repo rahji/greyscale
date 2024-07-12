@@ -66,7 +66,8 @@ named greyscale color in the image
 		}
 
 		bounds := m.Bounds()
-		numpix := bounds.Max.X * bounds.Max.Y
+		totalPixels := bounds.Max.X * bounds.Max.Y
+		pixelsConsidered := 0
 
 		// An image's bounds do not necessarily start at (0, 0), so the two loops start
 		// at bounds.Min.Y and bounds.Min.X. Looping over Y first and X second is more
@@ -78,27 +79,32 @@ named greyscale color in the image
 				// A color's RGBA method returns values in the range [0, 65535].
 				// Shifting by 12 reduces this to the range [0, 15].
 				histogram[r>>12]++
+				pixelsConsidered++
 			}
 		}
 
 		if colorName != "" {
 			colorName = cases.Title(language.Und).String(colorName)
 			colorIndex := slices.Index(scale, colorName)
-			pct := float64(histogram[colorIndex]) / float64(numpix) * 100
+			pct := float64(histogram[colorIndex]) / float64(totalPixels) * 100
 			fmt.Println(pct)
 			os.Exit(0)
 		}
 
 		var out strings.Builder
-		out.WriteString("|Color Name|Pixels|Percent|\n")
-		out.WriteString("|----:|-----:|------:|\n")
+		out.WriteString("# Color Histogram\n")
+		out.WriteString("||Color Name|Value Range|Pixels|Percent|\n")
+		out.WriteString("|:--:|----:|----:|-----:|------:|\n")
 		for i, x := range histogram {
-			pct := float64(x) / float64(numpix) * 100
+			maxRange := (i << 4) | 0x0F
+			minRange := maxRange - 15
+			pct := float64(x) / float64(totalPixels) * 100
 			if nonzero && pct == 0 {
 				continue
 			}
-			out.WriteString(fmt.Sprintf("|%s|%d|%.02f%%|\n", scale[i], x, pct))
+			out.WriteString(fmt.Sprintf("%d|%s|%03d - %03d|%d|%.02f%%|\n", i, scale[i], minRange, maxRange, histogram[i], pct))
 		}
+		out.WriteString(fmt.Sprintf("\n*Pixels considered: %d of %d*\n", pixelsConsidered, totalPixels))
 		md, err := glamour.Render(out.String(), "dark")
 		fmt.Print(md)
 		os.Exit(0)
