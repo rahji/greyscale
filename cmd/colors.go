@@ -23,9 +23,11 @@ package cmd
 
 import (
 	"fmt"
+	"image"
 	"log"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/glamour"
@@ -49,14 +51,6 @@ the infile image is represented by each of 16 named greyscale colors.
 
 Note that the image is *assumed* to be a greyscale!
 
-One of three additional flags can be used:
-
---color will return a number representing the percentage of that 
-named greyscale color in the image
-
---top will return the top n highest-frequency colors in the image
-
---pixels shows the histogram only for pixels in the range x,y:x,y
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -69,17 +63,67 @@ named greyscale color in the image
 		totalPixels := bounds.Max.X * bounds.Max.Y
 		pixelsConsidered := 0
 
+		var minRangeX, minRangeY int
+		pixelAmount := totalPixels // will get overwritten if --pixels is used
+
+		if pixels != "" {
+			// determine the starting coordinates based on --pixels flag
+
+			// turn xy:n into [xy n] strings
+			xyxyn := strings.Split(pixels, ":")
+			if len(xyxyn) != 2 {
+				log.Fatal(fmt.Errorf("--pixels flag must be specied as x,y:n"))
+			}
+			// turn xy into [x y] ints
+			xyxy := strings.Split(xyxyn[0], ",")
+			if len(xyxy) != 2 {
+				log.Fatal(fmt.Errorf("--pixels flag must be specied as x,y:n"))
+			}
+			minRangeX, err = strconv.Atoi(xyxy[0])
+			if err != nil {
+				log.Fatal(fmt.Errorf("x couldn't be converted to a number in --pixels flag"))
+			}
+			minRangeY, err = strconv.Atoi(xyxy[1])
+			if err != nil {
+				log.Fatal(fmt.Errorf("y couldn't be converted to a number in --pixels flag"))
+			}
+			// turn n into n int
+			pixelAmount, err = strconv.Atoi(xyxyn[1])
+			if err != nil {
+				log.Fatal(fmt.Errorf("number of pixels couldn't be converted to a number in --pixels flag"))
+			}
+
+			// validate the actual x and y values
+			if minRangeX > bounds.Max.X {
+				log.Fatal(fmt.Errorf("x value specifed with --pixels is larger than the image width"))
+			}
+			if minRangeY > bounds.Max.Y {
+				log.Fatal(fmt.Errorf("y value specifed with --pixels is larger than the image width"))
+			}
+		} else {
+			// otherwise, just start normally at the minimum bounds of the image (probably 0,0)
+			minRangeX = bounds.Min.X
+			minRangeY = bounds.Min.Y
+		}
+
+		// end pixels are always the max bounds, but later we will
+		// break out of the loop early if --pixels was used
+		maxRangeX := bounds.Max.X
+		maxRangeY := bounds.Max.Y
+
 		// An image's bounds do not necessarily start at (0, 0), so the two loops start
 		// at bounds.Min.Y and bounds.Min.X. Looping over Y first and X second is more
 		// likely to result in better memory access patterns than X first and Y second.
 		var histogram [16]int
-		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-			for x := bounds.Min.X; x < bounds.Max.X; x++ {
-				r, _, _, _ := m.At(x, y).RGBA()
-				// A color's RGBA method returns values in the range [0, 65535].
-				// Shifting by 12 reduces this to the range [0, 15].
-				histogram[r>>12]++
+	outer:
+		for y := minRangeY; y < maxRangeY; y++ {
+			for x := minRangeX; x < maxRangeX; x++ {
+				grey := getGrey(m, x, y)
+				histogram[grey]++
 				pixelsConsidered++
+				if pixelAmount == pixelsConsidered {
+					break outer
+				}
 			}
 		}
 
@@ -98,7 +142,7 @@ named greyscale color in the image
 		for i, x := range histogram {
 			maxRange := (i << 4) | 0x0F
 			minRange := maxRange - 15
-			pct := float64(x) / float64(totalPixels) * 100
+			pct := float64(x) / float64(pixelsConsidered) * 100
 			if nonzero && pct == 0 {
 				continue
 			}
@@ -113,8 +157,37 @@ named greyscale color in the image
 
 func init() {
 	showCmd.AddCommand(colorsCmd)
-	colorsCmd.PersistentFlags().StringVarP(&colorName, "color", "c", "", "greyscale color name (returns percentage)")
-	colorsCmd.PersistentFlags().IntVarP(&top, "top", "t", 0, "number of the highest-frequency colors to show")
-	colorsCmd.PersistentFlags().StringVarP(&pixels, "pixels", "p", "", "range of pixels to look at (x,y:x,y)")
+	colorsCmd.PersistentFlags().StringVarP(&colorName, "color", "c", "", "greyscale color name (returns percentage of that color)")
+	colorsCmd.PersistentFlags().IntVarP(&top, "top", "t", 0, "filter the histogram to show only the the highest-frequency colors")
+	colorsCmd.PersistentFlags().StringVarP(&pixels, "pixels", "p", "", "range of pixels to look at (x,y:n)")
 	colorsCmd.PersistentFlags().BoolVarP(&nonzero, "nonzero", "n", false, "only show non-zero results")
+}
+
+// takes an image width and height, the coordinates of a starting pixel, and an amount of pixels to offset from that point
+// returns the new coordinates, clipped at the end of the image
+func movePixel(w, h, x, y, n int) (int, int) {
+	// calculate the starting position in 1D
+	startPos := y*w + x
+
+	// calculate the new position in 1D
+	newPos := startPos + n
+	fmt.Printf("width:%d height:%d x=%d y=%d newPos=%d\n", w, h, x, y, newPos)
+	if newPos >= w*h { // clip coordinates to end of the image
+		return w - 1, h - 1
+	} else {
+		// return new position, converted back to 2D coordinates
+		newY := newPos / w
+		newX := newPos % w
+		return newX, newY
+	}
+}
+
+// takes an image.Image and a set of coordinates
+// returns the amount of "grey" at that pixel (actually the amount of red since we just assume green and blue are the same)
+// the return value is shifted 12 bits to the right to put it in the range 0-15
+func getGrey(m image.Image, x int, y int) int {
+	r, _, _, _ := m.At(x, y).RGBA()
+	// A color's RGBA method returns values in the range [0, 65535].
+	// Shifting by 12 reduces this to the range [0, 15].
+	return int(r >> 12)
 }
