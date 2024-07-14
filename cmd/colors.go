@@ -40,6 +40,7 @@ var colorName string
 var pixels string
 var top int
 var nonzero bool
+var csv bool
 
 // colorsCmd represents the colors command
 var colorsCmd = &cobra.Command{
@@ -130,15 +131,17 @@ Note that the image is *assumed* to be a greyscale!
 		if colorName != "" {
 			colorName = cases.Title(language.Und).String(colorName)
 			colorIndex := slices.Index(scale, colorName)
-			pct := float64(histogram[colorIndex]) / float64(totalPixels) * 100
+			pct := float64(histogram[colorIndex]) / float64(pixelsConsidered) * 100
 			fmt.Println(pct)
 			os.Exit(0)
 		}
 
 		var out strings.Builder
-		out.WriteString("# Color Histogram\n")
-		out.WriteString("||Color Name|Value Range|Pixels|Percent|\n")
-		out.WriteString("|:--:|----:|----:|-----:|------:|\n")
+		if !csv {
+			out.WriteString("# Color Histogram\n")
+			out.WriteString("||Color Name|Min Value|Max Value|Pixels|Percent|\n")
+			out.WriteString("|:--:|----:|----:|----:|-----:|------:|\n")
+		}
 		for i, x := range histogram {
 			maxRange := (i << 4) | 0x0F
 			minRange := maxRange - 15
@@ -146,11 +149,22 @@ Note that the image is *assumed* to be a greyscale!
 			if nonzero && pct == 0 {
 				continue
 			}
-			out.WriteString(fmt.Sprintf("%d|%s|%03d - %03d|%d|%.02f%%|\n", i, scale[i], minRange, maxRange, histogram[i], pct))
+			var outString string
+			if csv {
+				outString = "%d,%s,%d,%d,%d,%.02f\n"
+			} else {
+				outString = "|%d|%s|%03d|%03d|%d|%.02f%%|\n"
+			}
+			out.WriteString(fmt.Sprintf(outString, i, scale[i], minRange, maxRange, histogram[i], pct))
 		}
-		out.WriteString(fmt.Sprintf("\n*Pixels considered: %d of %d*\n", pixelsConsidered, totalPixels))
-		md, err := glamour.Render(out.String(), "dark")
-		fmt.Print(md)
+
+		if !csv {
+			out.WriteString(fmt.Sprintf("\n*Pixels considered: %d of %d*\n", pixelsConsidered, totalPixels))
+			md, _ := glamour.Render(out.String(), "dark")
+			fmt.Print(md)
+		} else {
+			fmt.Print(out.String())
+		}
 		os.Exit(0)
 	},
 }
@@ -161,6 +175,7 @@ func init() {
 	colorsCmd.PersistentFlags().IntVarP(&top, "top", "t", 0, "filter the histogram to show only the the highest-frequency colors")
 	colorsCmd.PersistentFlags().StringVarP(&pixels, "pixels", "p", "", "range of pixels to look at (x,y:n)")
 	colorsCmd.PersistentFlags().BoolVarP(&nonzero, "nonzero", "n", false, "only show non-zero results")
+	colorsCmd.PersistentFlags().BoolVarP(&csv, "csv", "r", false, "show raw comma-delimited output")
 }
 
 // takes an image width and height, the coordinates of a starting pixel, and an amount of pixels to offset from that point
