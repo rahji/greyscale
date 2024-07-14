@@ -27,6 +27,7 @@ import (
 	"log"
 	"os"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -107,15 +108,15 @@ Note that the image is *assumed* to be a greyscale!
 			minRangeY = bounds.Min.Y
 		}
 
-		// end pixels are always the max bounds, but later we will
+		// end pixels are always the max bounds of the image, but later we will
 		// break out of the loop early if --pixels was used
 		maxRangeX := bounds.Max.X
 		maxRangeY := bounds.Max.Y
 
+		var histogram [16]int
 		// An image's bounds do not necessarily start at (0, 0), so the two loops start
 		// at bounds.Min.Y and bounds.Min.X. Looping over Y first and X second is more
 		// likely to result in better memory access patterns than X first and Y second.
-		var histogram [16]int
 	outer:
 		for y := minRangeY; y < maxRangeY; y++ {
 			for x := minRangeX; x < maxRangeX; x++ {
@@ -136,6 +137,10 @@ Note that the image is *assumed* to be a greyscale!
 			os.Exit(0)
 		}
 
+		if top > 0 {
+			histogram = topValues(histogram, top)
+		}
+
 		var out strings.Builder
 		if !csv {
 			out.WriteString("# Color Histogram\n")
@@ -143,19 +148,21 @@ Note that the image is *assumed* to be a greyscale!
 			out.WriteString("|:--:|----:|----:|----:|-----:|------:|\n")
 		}
 		for i, x := range histogram {
-			maxRange := (i << 4) | 0x0F
-			minRange := maxRange - 15
+			maxGreyValueRange := (i << 4) | 0x0F
+			minGreyValueRange := maxGreyValueRange - 15
 			pct := float64(x) / float64(pixelsConsidered) * 100
-			if nonzero && pct == 0 {
+			if (top > 0 || nonzero) && pct == 0 {
+				// --top causes the value to be zero, so skip it
+				// also skip a zero value if --nonzero was specified
 				continue
 			}
 			var outString string
 			if csv {
 				outString = "%d,%s,%d,%d,%d,%.02f\n"
 			} else {
-				outString = "|%d|%s|%03d|%03d|%d|%.02f%%|\n"
+				outString = "|%d|%s|%3d|%03d|%d|%.02f%%|\n"
 			}
-			out.WriteString(fmt.Sprintf(outString, i, scale[i], minRange, maxRange, histogram[i], pct))
+			out.WriteString(fmt.Sprintf(outString, i, scale[i], minGreyValueRange, maxGreyValueRange, histogram[i], pct))
 		}
 
 		if !csv {
@@ -205,4 +212,39 @@ func getGrey(m image.Image, x int, y int) int {
 	// A color's RGBA method returns values in the range [0, 65535].
 	// Shifting by 12 reduces this to the range [0, 15].
 	return int(r >> 12)
+}
+
+// topValues returns a 16-item array with only the highest `top` values
+// the rest of the items have their value set to 0
+func topValues(arr [16]int, top int) [16]int {
+	if top >= 16 {
+		return arr
+	}
+
+	// Create a copy of the array and sort it in descending order
+	sortedArr := make([]int, 16)
+	copy(sortedArr, arr[:])
+	sort.Sort(sort.Reverse(sort.IntSlice(sortedArr)))
+
+	// Take the top values
+	topValues := sortedArr[:top]
+
+	// Create a map to keep track of the selected values and their counts
+	valueCount := make(map[int]int)
+	for _, val := range topValues {
+		valueCount[val]++
+	}
+
+	// Collect the top values from the original array in the same order
+	var result [16]int
+	i := 0
+	for _, val := range arr {
+		if valueCount[val] > 0 {
+			result[i] = val
+			i++
+			valueCount[val]--
+		}
+	}
+
+	return result
 }
