@@ -30,18 +30,15 @@ Worthy of note is the difference between `8bitgreyscale.png` and `32bitgreyscale
 
 ## Installation
 
-1. Download the appropriate archive file from the [Releases](https://github.com/rahji/greyscale/releases/latest) page
-2. Place the `greyscale` executable [somewhere in your path](https://zwbetz.com/how-to-add-a-binary-to-your-path-on-macos-linux-windows/)
-3. Open a terminal window. (On MacOS, use the Terminal app. On Windows, you might need to [download Windows Terminal](https://apps.microsoft.com/store/detail/windows-terminal/9N0DX20HK701?hl=en-us&gl=us&rtc=1) from Microsoft.)
-4. Execute the command using the instructions above
+The easiest way to install is to download the appropriate archive file from the [Releases](https://github.com/rahji/greyscale/releases/latest) page, place the `greyscale` binary  [somewhere in your path](https://zwbetz.com/how-to-add-a-binary-to-your-path-on-macos-linux-windows/), and run it from your terminal (eg: Terminal.app in MacOS or [Windows Terminal](https://apps.microsoft.com/store/detail/windows-terminal/9N0DX20HK701?hl=en-us&gl=us&rtc=1))
 
-Or, if you have `go` installed you can either use the following command: 
+**OR** If you have `go` installed you can clone this repo and run `mkdir -p ./bin && make build`
+
+**OR** If you want to use `go install` instead, you can run the following command while making sure to use the [latest version number](https://github.com/rahji/greyscale/tags):
 
 ```bash
-go install -ldflags="-X 'github.com/rahji/greyscale/cmd.version=1.0.0'" github.com/rahji/greyscale@latest
+go install -ldflags="-X 'github.com/rahji/greyscale/cmd.version=1.0.1'" github.com/rahji/greyscale@latest
 ```
-
-Or clone this repo and run `mkdir -p ~/bin && make build`
 
 ## Notes
 
