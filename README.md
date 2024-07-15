@@ -2,7 +2,7 @@
 
 A command-line tool for interrogating greyscale images.
 
- ![Made with VHS](https://vhs.charm.sh/vhs-3q4Wb3nkLwsWOKiWhiGGDB.gif)
+ ![An animation of the greyscale command running](docs/demo.gif)
 
 ## Usage
 
