@@ -8,9 +8,10 @@ A command-line tool for interrogating greyscale images.
 
 `greyscale` has a few commands and subcommands:
 
-* `greyscale list` lists the 16 grey names that the other commands use
+* `greyscale list` lists the 16 grey names that the `show` commands use
 * `greyscale show info` shows details about the image specified by the `--infile` flag
 * `greyscale show colors` shows a histogram of the greys that make up the `--infile` image
+* `greyscale pick` show the grey color (0-255 or HTML hex string) at a given pixel
 
 The `show info` command's output can be filtered using `--dimensions`, `--width`, or `--height`. 
 This can be useful for piping a single piece of information to another command.

@@ -221,30 +221,34 @@ func topValues(arr [16]int, top int) [16]int {
 		return arr
 	}
 
-	// Create a copy of the array and sort it in descending order
-	sortedArr := make([]int, 16)
-	copy(sortedArr, arr[:])
-	sort.Sort(sort.Reverse(sort.IntSlice(sortedArr)))
-
-	// Take the top values
-	topValues := sortedArr[:top]
-
-	// Create a map to keep track of the selected values and their counts
-	valueCount := make(map[int]int)
-	for _, val := range topValues {
-		valueCount[val]++
+	// make a struct to hold each histogram entry
+	type GreyValue struct {
+		GreyNumber int
+		Count      int
 	}
 
-	// Collect the top values from the original array in the same order
-	var result [16]int
-	i := 0
-	for _, val := range arr {
-		if valueCount[val] > 0 {
-			result[i] = val
-			i++
-			valueCount[val]--
+	// make a slice of GreyValue structs from the array
+	var greys []GreyValue
+	for i, v := range arr {
+		grey := GreyValue{GreyNumber: i, Count: v}
+		greys = append(greys, grey)
+	}
+
+	// reverse sort the slice by Count
+	sort.Slice(greys, func(i, j int) bool {
+		return greys[i].Count > greys[j].Count
+	})
+
+	// make the output array from the slice
+	var ret [16]int
+	count := 0
+	for _, g := range greys {
+		ret[g.GreyNumber] = g.Count
+		count++
+		if count == top {
+			break
 		}
 	}
 
-	return result
+	return ret
 }
