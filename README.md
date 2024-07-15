@@ -35,11 +35,13 @@ Worthy of note is the difference between `8bitgreyscale.png` and `32bitgreyscale
 3. Open a terminal window. (On MacOS, use the Terminal app. On Windows, you might need to [download Windows Terminal](https://apps.microsoft.com/store/detail/windows-terminal/9N0DX20HK701?hl=en-us&gl=us&rtc=1) from Microsoft.)
 4. Execute the command using the instructions above
 
-Or, if you have `go` installed you can just type: 
+Or, if you have `go` installed you can either use the following command: 
 
 ```bash
-go install github.com/rahji/greyscale@latest
+go install -ldflags="-X 'github.com/rahji/greyscale/cmd.version=1.0.0'" github.com/rahji/greyscale@latest
 ```
+
+Or clone this repo and run `mkdir -p ~/bin && make build`
 
 ## Notes
 
