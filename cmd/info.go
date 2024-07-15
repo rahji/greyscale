@@ -96,7 +96,7 @@ which can be useful for scripts or piping the output to another command.
 		out.WriteString(fmt.Sprintf("|Filetype|%s|\n", filetype))
 		out.WriteString(fmt.Sprintf("|Color Model|%s|\n", colorModelName))
 		out.WriteString(fmt.Sprintf("|Min Bounds|%d x %d|\n", bounds.Min.X, bounds.Min.Y))
-		out.WriteString(fmt.Sprintf("|Max Bounds||%d x %d|\n", bounds.Max.X, bounds.Max.Y))
+		out.WriteString(fmt.Sprintf("|Max Bounds|%d x %d|\n", bounds.Max.X, bounds.Max.Y))
 		out.WriteString(fmt.Sprintf("|Total Pixels|%d|\n\n", numpix))
 		md, _ := glamour.Render(out.String(), "dark")
 		fmt.Print(md)
