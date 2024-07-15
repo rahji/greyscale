@@ -3,13 +3,12 @@ BINARY_NAME=greyscale
 all: build
  
 build:
-	go build -o ./bin/${BINARY_NAME} main.go
- 
+	go build -ldflags="-X 'github.com/rahji/greyscale/cmd.version=1.0.0'" -o ./bin/${BINARY_NAME} main.go
 test:
 	go test -v main.go
  
 run:
-	go build -o ./bin/${BINARY_NAME} main.go
+	go build -ldflags="-X 'github.com/rahji/greyscale/cmd.version=1.0.0'" -o ./bin/${BINARY_NAME} main.go
 	./bin/${BINARY_NAME}
  
 clean:

@@ -52,9 +52,10 @@ var scale = []string{
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "greyscale",
-	Short: "a tool for working with greyscale images",
-	Long:  "assuming your image is greyscale, it provides stats about its colors",
+	Use:     "greyscale",
+	Version: version,
+	Short:   "a tool for working with greyscale images",
+	Long:    "assuming your image is greyscale, it provides stats about its colors",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
