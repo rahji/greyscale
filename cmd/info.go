@@ -26,7 +26,9 @@ import (
 	"image/color"
 	"log"
 	"os"
+	"strings"
 
+	"github.com/charmbracelet/glamour"
 	"github.com/spf13/cobra"
 )
 
@@ -87,11 +89,17 @@ which can be useful for scripts or piping the output to another command.
 			colorModelName = "Unknown"
 		}
 
-		fmt.Printf("Filetype:      %s\n", filetype)
-		fmt.Printf("Color Model:   %s\n", colorModelName)
-		fmt.Printf("Min Bounds:    %d x %d\n", bounds.Min.X, bounds.Min.Y)
-		fmt.Printf("Max Bounds:    %d x %d\n", bounds.Max.X, bounds.Max.Y)
-		fmt.Printf("Total Pixels:  %d\n", numpix)
+		var out strings.Builder
+		out.WriteString("# Image Info\n\n")
+		out.WriteString("|Key|Value|\n")
+		out.WriteString("|-----:|:-----|\n")
+		out.WriteString(fmt.Sprintf("|Filetype|%s|\n", filetype))
+		out.WriteString(fmt.Sprintf("|Color Model|%s|\n", colorModelName))
+		out.WriteString(fmt.Sprintf("|Min Bounds|%d x %d|\n", bounds.Min.X, bounds.Min.Y))
+		out.WriteString(fmt.Sprintf("|Max Bounds||%d x %d|\n", bounds.Max.X, bounds.Max.Y))
+		out.WriteString(fmt.Sprintf("|Total Pixels|%d|\n\n", numpix))
+		md, _ := glamour.Render(out.String(), "dark")
+		fmt.Print(md)
 	},
 }
 
