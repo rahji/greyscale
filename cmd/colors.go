@@ -160,7 +160,7 @@ Note that the image is *assumed* to be a greyscale!
 			if csv {
 				outString = "%d,%s,%d,%d,%d,%.02f\n"
 			} else {
-				outString = "|%d|%s|%3d|%03d|%d|%.02f%%|\n"
+				outString = "|%d|%s|%3d|%3d|%d|%.02f%%|\n"
 			}
 			out.WriteString(fmt.Sprintf(outString, i, scale[i], minGreyValueRange, maxGreyValueRange, histogram[i], pct))
 		}
